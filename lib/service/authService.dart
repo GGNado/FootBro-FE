@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../entity/user/userAuthRequest.dart';
 import '../entity/user/userAuthResponse.dart';
+import '../entity/user/userAuthRegisterRequest.dart';
 
 class AuthService {
   final String _baseUrl = HTTP_URLS.host;
@@ -42,4 +43,21 @@ class AuthService {
       return false;
     }
   }
+
+  Future<bool> register(UserAuthRegisterRequest request) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/api/auth/signup'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(request.toJson()),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else {
+      throw Exception('Failed to register: ${response.statusCode}');
+    }
+  }
+
 }

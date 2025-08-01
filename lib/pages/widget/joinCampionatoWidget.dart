@@ -98,165 +98,167 @@ class _JoinChampionshipDialogState extends State<JoinChampionshipDialog>
       backgroundColor: Colors.transparent,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-                child: Icon(
-                  Icons.emoji_events,
-                  color: Colors.green[600],
-                  size: 30,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                'Entra nel Campionato',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                'Inserisci il codice a 8 lettere per accedere al campionato',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Campo di input per il codice
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey[300]!,
-                    width: 1,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.emoji_events,
+                    color: Colors.green[600],
+                    size: 30,
                   ),
                 ),
-                child: TextField(
-                  controller: _codeController,
-                  focusNode: _focusNode,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'Entra nel Campionato',
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
+                    color: Colors.grey[800],
                   ),
-                  maxLength: 8,
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                    UpperCaseTextFormatter(),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: 'AB12EF34',
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  'Inserisci il codice a 8 lettere per accedere al campionato',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Campo di input per il codice
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _codeController,
+                    focusNode: _focusNode,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                       letterSpacing: 4,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
-                    counterText: '',
+                    maxLength: 8,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                      UpperCaseTextFormatter(),
+                    ],
+                    decoration: const InputDecoration(
+                      hintText: 'AB12EF34',
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        letterSpacing: 4,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(16),
+                      counterText: '',
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                    onSubmitted: (_) => _handleJoin(),
                   ),
-                  onChanged: (value) {
-                    setState(() {});
-                  },
-                  onSubmitted: (_) => _handleJoin(),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Annulla',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading || _codeController.text.length != 8
-                          ? null
-                          : _handleJoin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[600],
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                          : const Text(
-                        'Entra',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        child: const Text(
+                          'Annulla',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading || _codeController.text.length != 8
+                            ? null
+                            : _handleJoin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[600],
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                            : const Text(
+                          'Entra',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

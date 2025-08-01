@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:foot_bro/entity/statistiche/quickStatsResponse.dart';
 import 'package:foot_bro/pages/widget/joinCampionatoWidget.dart';
 import 'package:foot_bro/service/campionatoService.dart';
+import 'package:foot_bro/service/userService.dart';
 import '../entity/campionato/campionatoResponse.dart';
 
 import '../entity/user/user.dart';
@@ -18,6 +20,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   User? user;
 
   List<CampionatoResponse> campionati = [];
+  QuickStatsResponse? quickStatsResponse;
 
   // Animazioni
   late AnimationController _headerAnimationController;
@@ -54,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
     _startAnimations();
     _fetchCampionati();
+    _fetchQuickStats();
   }
 
   Future<void> _fetchCampionati() async {
@@ -65,6 +69,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       });
     } catch (e) {
       debugPrint('Errore durante il fetch dei campionati: $e');
+    }
+  }
+
+  Future<void> _fetchQuickStats() async {
+    try{
+      final service = UserService();
+      final results = await service.getQuickStats(user!.token, user!.id);
+      setState(() {
+        quickStatsResponse = results;
+      });
+    }catch(e){
+      debugPrint('Errore durante il fetch delle statistiche quick: $e');
     }
   }
 
@@ -192,9 +208,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       topRight: Radius.circular(30),
                     ),
                   ),
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await _fetchCampionati();
+                      await _fetchQuickStats();
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
                       const SizedBox(height: 10),
 
                       // Quick stats
@@ -230,27 +251,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       ),
                       const SizedBox(height: 15),
                       _buildAnimatedCard(
-                        'La mia squadra',
-                        Icons.group,
-                        Colors.orange,
-                        '12 giocatori attivi',
-                        1,
-                      ),
-                      const SizedBox(height: 15),
-                      _buildAnimatedCard(
                         'Statistiche',
                         Icons.bar_chart,
                         Colors.purple,
                         'Vedi le tue performance',
                         2,
-                      ),
-                      const SizedBox(height: 15),
-                      _buildAnimatedCard(
-                        'Tornei',
-                        Icons.emoji_events,
-                        Colors.amber,
-                        '2 tornei disponibili',
-                        3,
                       ),
                       const SizedBox(height: 15),
                       _buildAnimatedCard(
@@ -270,6 +275,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ],
@@ -530,17 +536,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       children: [
         Expanded(
           child: _buildStatCard(
-              'Partite', '12', Icons.sports_soccer, Colors.blue
+              'Partite', "${quickStatsResponse?.partiteGiocateTotali ?? 0}", Icons.sports_soccer, Colors.blue
           ),
         ),
         const SizedBox(width: 15),
         Expanded(
-          child: _buildStatCard('Goal', '8', Icons.sports, Colors.orange),
+          child: _buildStatCard('Goal', "${quickStatsResponse?.goalFattiTotali ?? 0}", Icons.sports, Colors.orange),
         ),
         const SizedBox(width: 15),
         Expanded(
           child: _buildStatCard(
-              'Assist', '5', Icons.thumbs_up_down, Colors.green
+              'Assist', "${quickStatsResponse?.assistTotali ?? 0}", Icons.thumbs_up_down, Colors.green
           ),
         ),
       ],

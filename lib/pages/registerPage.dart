@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../entity/user/userAuthRegisterRequest.dart';
+import '../service/authService.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -9,6 +11,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage>
     with TickerProviderStateMixin {
+  final List<String> _ruoliDisponibili = ['PORTIERE', 'DIFENSORE', 'CENTROCAMPISTA', 'ATTACCANTE'];
+  final Set<String> _ruoliSelezionati = {};
   final _formKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -157,43 +161,36 @@ class _RegisterPageState extends State<RegisterPage>
     }
   }
 
-  // TODO: Implementare il servizio di registrazione
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate() || !_acceptTerms) {
-      if (!_acceptTerms) {
-        _showErrorSnackBar('Devi accettare i termini e condizioni');
-      }
+    if (!_acceptTerms) {
+      _showErrorSnackBar('Devi accettare i termini di servizio e la privacy policy');
       return;
     }
-
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // TODO: Chiamata al servizio di registrazione
-      // Example:
-      // final authService = AuthService();
-      // final result = await authService.register(
-      //   name: _nameController.text.trim(),
-      //   email: _emailController.text.trim(),
-      //   password: _passwordController.text,
-      // );
+      final request = UserAuthRegisterRequest(
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        firstName: _nameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        password: _passwordController.text.trim(),
+        roles: ['ROLE_USER'],
+        ruoliPreferiti: _ruoliSelezionati.toList(),
+      );
 
-      // TODO: Gestire la risposta del servizio
-      // if (result.success) {
-      //   _showSuccessSnackBar('Registrazione completata!');
-      //   Navigator.pushReplacementNamed(context, '/login');
-      // } else {
-      //   _showErrorSnackBar(result.message);
-      // }
+      final authService = AuthService();
+      final result = await authService.register(request);
 
-      // Simulazione per demo
-      await Future.delayed(const Duration(seconds: 2));
-      _showSuccessSnackBar('Registrazione completata! 🎉');
-
+      if (result) {
+        _showSuccessSnackBar('Registrazione completata! 🎉');
+        Navigator.pushReplacementNamed(context, '/login');
+      } else {
+        _showErrorSnackBar('Registrazione fallita');
+      }
     } catch (e) {
-      // TODO: Gestire gli errori di rete/servizio
       _showErrorSnackBar('Errore durante la registrazione: $e');
     } finally {
       setState(() {
@@ -579,6 +576,38 @@ class _RegisterPageState extends State<RegisterPage>
               return null;
             },
           ),
+          const SizedBox(height: 20),
+          Text(
+            'Ruoli preferiti',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _ruoliDisponibili.map((ruolo) {
+              final isSelected = _ruoliSelezionati.contains(ruolo);
+              return FilterChip(
+                label: Text(ruolo),
+                selected: isSelected,
+                selectedColor: Colors.green[100],
+                checkmarkColor: Colors.green[800],
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _ruoliSelezionati.add(ruolo);
+                    } else {
+                      _ruoliSelezionati.remove(ruolo);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
@@ -735,11 +764,24 @@ class _RegisterPageState extends State<RegisterPage>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _nameController.text,
+                      _nameController.text + " " + _lastNameController.text,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.account_circle, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _usernameController.text,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                 ],
@@ -752,6 +794,22 @@ class _RegisterPageState extends State<RegisterPage>
                   Expanded(
                     child: Text(
                       _emailController.text,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.sports_soccer, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _ruoliSelezionati.isNotEmpty
+                          ? _ruoliSelezionati.join(', ')
+                          : 'Nessun ruolo selezionato',
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
