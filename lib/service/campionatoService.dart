@@ -1,4 +1,5 @@
 import '../entity/campionato/campionatoResponse.dart';
+import '../entity/statistiche/classificaResponse.dart';
 import 'HTTP_URL.dart';
 
 import 'dart:convert';
@@ -57,4 +58,22 @@ class CampionatoService {
       throw Exception('Errore di connessione');
     }
   }
+
+  Future<ClassificaResponse> getClassifica(String token, int campionatoId) async {
+    final response = await http.get(
+      Uri.parse("$_baseUrl/api/campionati/$campionatoId/classifica"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return ClassificaResponse.fromJson(decoded);
+    } else {
+      throw Exception('Errore nel recupero della classifica');
+    }
+  }
+
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:foot_bro/entity/user/user.dart';
+import 'package:foot_bro/pages/campionatoPage.dart';
 import 'package:foot_bro/pages/homePage.dart';
 import 'package:foot_bro/pages/loginPage.dart';
 import 'package:foot_bro/pages/registerPage.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/home': (context) => const MyHomePage(title: 'FootBro Home'),
         '/register': (context) => const RegisterPage(),
+        '/campionato': (context) => const ChampionshipDetailPage(),
       },
     );
   }

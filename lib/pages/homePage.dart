@@ -657,16 +657,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${championship.nome ?? ''} - Da implementare'),
-                          backgroundColor: _getChampionshipColor(index),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      Navigator.pushNamed(
+                        context,
+                          '/campionato',
+                          arguments: {
+                            'championship': championship,
+                            'user': user,
+                          },
+                        );
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(12),
