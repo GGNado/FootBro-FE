@@ -1,5 +1,7 @@
 import '../entity/campionato/campionatoResponse.dart';
 import '../entity/statistiche/classificaResponse.dart';
+import '../entity/partita/partitaSmall.dart';
+import '../entity/partita/partita.dart';
 import 'HTTP_URL.dart';
 
 import 'dart:convert';
@@ -75,5 +77,43 @@ class CampionatoService {
       throw Exception('Errore nel recupero della classifica');
     }
   }
+
+  Future<List<PartitaSmall>> getPartiteProgrammateSmall(String token, int campionatoId) async {
+    final response = await http.get(
+      Uri.parse("$_baseUrl/api/partite/campionato/$campionatoId/programmateSmall"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> data = decoded['partiteSmall'];
+      return data.map((json) => PartitaSmall.fromJson(json)).toList();
+    } else {
+      throw Exception('Errore nel recupero delle partite programmate');
+    }
+  }
+
+  Future<List<Partita>> getPartiteProgrammateDetails(String token, int campionatoId) async {
+    final response = await http.get(
+      Uri.parse("$_baseUrl/api/partite/campionato/$campionatoId/programmateDetails"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> data = decoded['partitaFindAllDTO'];
+      return data.map((json) => Partita.fromJson(json)).toList();
+    } else {
+      throw Exception('Errore nel recupero dei dettagli delle partite programmate');
+    }
+  }
+
+
 
 }
