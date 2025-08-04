@@ -31,6 +31,7 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
   // Dati ricevuti come argomenti
   CampionatoResponse? championship;
   User? user;
+  bool isUserAdmin = false;
 
   // Classifica ricevuta dal backend
   List<Partecipazione> classifica = [];
@@ -62,6 +63,7 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
         user = arguments['user'];
         _loadClassifica();
         _loadUpcomingMatches();
+        _chechIfUserIsAdmin();
       }
     }
   }
@@ -238,6 +240,7 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
                 MatchesTab(
                   upcomingMatches: upcomingMatches,
                   user: user!,
+                  isUserAdmin: isUserAdmin,
                   isUserRegisteredForMatch: isUserRegisteredForMatch,
                   toggleMatchRegistration: toggleMatchRegistration,
                 ),
@@ -248,5 +251,11 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
         ],
       ),
     );
+  }
+
+  void _chechIfUserIsAdmin() {
+    if (user == null || championship == null) return;
+    isUserAdmin = user!.email == championship!.creatore.email;
+
   }
 }
