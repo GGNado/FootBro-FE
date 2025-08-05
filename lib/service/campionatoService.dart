@@ -1,3 +1,5 @@
+import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
+
 import '../entity/campionato/campionatoResponse.dart';
 import '../entity/statistiche/classificaResponse.dart';
 import '../entity/partita/partitaSmall.dart';
@@ -114,6 +116,20 @@ class CampionatoService {
     }
   }
 
+  Future<void> salvaSquadra(String token, int partita, SalvaSquadraRequest salvaSquadra) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/api/partite/$partita/salvaSquadra"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(salvaSquadra.toJson()),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Errore nel salvataggio della squadra');
+    }
+  }
 
 
 }

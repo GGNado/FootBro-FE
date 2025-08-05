@@ -243,6 +243,7 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
                   isUserAdmin: isUserAdmin,
                   isUserRegisteredForMatch: isUserRegisteredForMatch,
                   toggleMatchRegistration: toggleMatchRegistration,
+                  reloadUpcomingMatches: _loadUpcomingMatches,
                 ),
                 InfoTab(championship: championship!),
               ],

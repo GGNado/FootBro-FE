@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
+import 'package:foot_bro/service/campionatoService.dart';
 import '../../../entity/partita/partita.dart';
 import '../../../entity/user/user.dart';
 
@@ -653,13 +655,33 @@ class _MatchDetailsSheetState extends State<MatchDetailsSheet> {
             ],
           ),
 
-          // Dopo _buildDragDropTeams() in _buildAdminSection
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: (){
-                print("Salvataggio delle squadre in corso...");
+                CampionatoService service = CampionatoService();
+                SalvaSquadraRequest salvaSquadraA = SalvaSquadraRequest(
+                  idUtenti: teamA.map((p) => p.utente.id as int).toList(),
+                  squadra: 'A',
+                );
+
+                SalvaSquadraRequest salvaSquadraB = SalvaSquadraRequest(
+                  idUtenti: teamB.map((p) => p.utente.id as int).toList(),
+                  squadra: 'B',
+                );
+
+                SalvaSquadraRequest salvaSquadraDaAssegnare = SalvaSquadraRequest(
+                  idUtenti: unassigned.map((p) => p.utente.id as int).toList(),
+                  squadra: 'DA_ASSEGNARE',
+                );
+                service.salvaSquadra(widget.user.token, widget.match.id, salvaSquadraA);
+                service.salvaSquadra(widget.user.token, widget.match.id, salvaSquadraB);
+                service.salvaSquadra(widget.user.token, widget.match.id, salvaSquadraDaAssegnare);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Squadre salvate con successo! Aggiorna per vedere le modifiche.')),
+                );
               }, //_saveTeams,
               icon: const Icon(Icons.save, size: 18),
               label: const Text(

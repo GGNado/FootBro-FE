@@ -10,6 +10,7 @@ class MatchesTab extends StatelessWidget {
   final bool isUserAdmin;
   final bool Function(Partita) isUserRegisteredForMatch;
   final Future<void> Function(Partita) toggleMatchRegistration;
+  final Future<void> Function() reloadUpcomingMatches;
 
   const MatchesTab({
     Key? key,
@@ -18,6 +19,7 @@ class MatchesTab extends StatelessWidget {
     required this.isUserRegisteredForMatch,
     required this.toggleMatchRegistration,
     required this.isUserAdmin,
+    required this.reloadUpcomingMatches,
   }) : super(key: key);
 
   @override
@@ -28,6 +30,7 @@ class MatchesTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionHeader('Prossime Partite', Icons.schedule, Colors.blue),
+          _buildRefreshButton(),
           const SizedBox(height: 12),
           if (upcomingMatches.isEmpty)
             _buildEmptyState()
@@ -41,6 +44,78 @@ class MatchesTab extends StatelessWidget {
             )),
         ],
       ),
+    );
+  }
+
+  Widget _buildRefreshButton() {
+    return FutureBuilder<void>(
+      future: null,
+      builder: (context, snapshot) {
+        bool isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue[200]!),
+          ),
+          child: IconButton(
+            onPressed: isLoading ? null : () async {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              try {
+                await reloadUpcomingMatches();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Partite aggiornate!'),
+                      ],
+                    ),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.error, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('Errore nel caricamento: $e'),
+                      ],
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            icon: AnimatedRotation(
+              turns: isLoading ? 1 : 0,
+              duration: Duration(milliseconds: 1000),
+              child: Icon(
+                Icons.refresh,
+                color: isLoading ? Colors.blue[300] : Colors.blue[600],
+                size: 24,
+              ),
+            ),
+            tooltip: 'Aggiorna partite',
+          ),
+        );
+      },
     );
   }
 
@@ -240,12 +315,14 @@ class MatchCard extends StatelessWidget {
                   ],
                 ),
 
-                if (unassigned.isNotEmpty) ...[
+                // Mostra tutti gli iscritti alla partita
+                if (match.partecipazioni.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
-                    children: unassigned.take(5).map((username) {
+                    children: match.partecipazioni.map((partecipazione) {
+                      final username = partecipazione.utente.username;
                       final isCurrentUser = username == user.username;
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -267,18 +344,6 @@ class MatchCard extends StatelessWidget {
                       );
                     }).toList(),
                   ),
-                  if (unassigned.length > 5)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        '+${unassigned.length - 5} altri',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[500],
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
                 ],
 
                 const SizedBox(height: 16),
