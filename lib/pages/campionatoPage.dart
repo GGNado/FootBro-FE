@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foot_bro/entity/campionato/campionatoResponse.dart';
 import 'package:foot_bro/entity/partita/partita.dart';
+import 'package:foot_bro/entity/partita/partitaCreateRequest.dart';
 import 'package:foot_bro/entity/user/user.dart';
 import 'package:foot_bro/pages/widget/matchCampionato/championShip_header.dart';
 import 'package:foot_bro/pages/widget/matchCampionato/info_tab.dart';
@@ -11,7 +12,6 @@ import '../entity/partita/partitaSmall.dart';
 import '../entity/statistiche/classificaResponse.dart';
 import '../service/campionatoService.dart';
 import '../store/storage.dart';
-
 
 class ChampionshipDetailPage extends StatefulWidget {
   const ChampionshipDetailPage({
@@ -43,6 +43,14 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    // Listener per aggiornare il FAB quando cambia tab
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+
     _headerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -99,6 +107,39 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
     }
   }
 
+  // Metodo per aggiungere una nuova partita
+  Future<void> _addNewMatch(PartitaCreateRequest partitaCreateRequest) async {
+    try {
+      final service = CampionatoService();
+
+      final success = await service.addPartita(user!.token, championship!.id, partitaCreateRequest);
+      if (success) {
+        await _loadUpcomingMatches();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Partita aggiunta con successo'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Errore nell\'aggiungere la partita'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore nell\'aggiungere la partita: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   // Metodo per controllare se l'utente è iscritto a una partita
   bool isUserRegisteredForMatch(Partita match) {
     if (user == null) return false;
@@ -108,7 +149,6 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
     );
   }
 
-  // Metodo per iscriversi/disiscriversi da una partita
   Future<void> toggleMatchRegistration(Partita match) async {
     final isRegistered = isUserRegisteredForMatch(match);
 
@@ -116,29 +156,48 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
       final service = CampionatoService();
 
       if (isRegistered) {
-        // await service.unregisterFromMatch(user!.token, match.id);
+        final success = await service.unregisterFromMatch(user!.token, match.id, user!.id);
 
-        setState(() {
-          match.partecipazioni.removeWhere(
-                  (p) => p.utente.email == user!.email
+        if (success) {
+          setState(() {
+            match.partecipazioni.removeWhere(
+                  (p) => p.utente.email == user!.email,
+            );
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ti sei disiscritto dalla partita'),
+              backgroundColor: Colors.orange,
+            ),
           );
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ti sei disiscritto dalla partita'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Errore nella disiscrizione dalla partita'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } else {
-        // await service.registerForMatch(user!.token, match.id);
+        final success = await service.iscrivitiAllaPartita(user!.token, match.id, user!.id);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ti sei iscritto alla partita'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (success) {
+          await _loadUpcomingMatches();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ti sei iscritto alla partita'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Errore nell\'iscrizione alla partita'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +236,18 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
       }
     }
     return null;
+  }
+
+  // Metodo per mostrare il form di aggiunta partita
+  void _showAddMatchDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddMatchDialog(
+          onAddMatch: _addNewMatch,
+        );
+      },
+    );
   }
 
   @override
@@ -251,12 +322,151 @@ class _ChampionshipDetailPageState extends State<ChampionshipDetailPage>
           ),
         ],
       ),
+      // Floating Action Button solo nel tab Partite e solo per gli admin
+      floatingActionButton: (isUserAdmin && _tabController.index == 1)
+          ? FloatingActionButton(
+        onPressed: _showAddMatchDialog,
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add, color: Colors.white),
+      )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
   void _chechIfUserIsAdmin() {
     if (user == null || championship == null) return;
     isUserAdmin = user!.email == championship!.creatore.email;
+  }
+}
 
+// Dialog per aggiungere una nuova partita
+class AddMatchDialog extends StatefulWidget {
+  final Function(PartitaCreateRequest) onAddMatch;
+
+  const AddMatchDialog({
+    Key? key,
+    required this.onAddMatch,
+  }) : super(key: key);
+
+  @override
+  State<AddMatchDialog> createState() => _AddMatchDialogState();
+}
+
+class _AddMatchDialogState extends State<AddMatchDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _luogoController = TextEditingController();
+  DateTime _selectedDateTime = DateTime.now().add(const Duration(days: 1));
+
+  @override
+  void dispose() {
+    _luogoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDateTime() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateTime,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _selectedDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      }
+    }
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      final partitaCreateRequest = PartitaCreateRequest(
+        dataOra: _selectedDateTime,
+        luogo: _luogoController.text.trim(),
+      );
+
+      widget.onAddMatch(partitaCreateRequest);
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Aggiungi Nuova Partita',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Campo luogo
+            TextFormField(
+              controller: _luogoController,
+              decoration: const InputDecoration(
+                labelText: 'Luogo',
+                hintText: 'Inserisci il luogo della partita',
+                prefixIcon: Icon(Icons.location_on),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Il luogo è obbligatorio';
+                }
+                if (value.trim().length < 3) {
+                  return 'Il luogo deve contenere almeno 3 caratteri';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // Selezione data e ora
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.calendar_today, color: Colors.deepPurple),
+                title: const Text('Data e Ora'),
+                subtitle: Text(
+                  '${_selectedDateTime.day.toString().padLeft(2, '0')}/${_selectedDateTime.month.toString().padLeft(2, '0')}/${_selectedDateTime.year} - ${_selectedDateTime.hour.toString().padLeft(2, '0')}:${_selectedDateTime.minute.toString().padLeft(2, '0')}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: _selectDateTime,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Annulla'),
+        ),
+        ElevatedButton(
+          onPressed: _submitForm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Aggiungi'),
+        ),
+      ],
+    );
   }
 }

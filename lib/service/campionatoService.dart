@@ -1,4 +1,5 @@
 import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
+import 'package:foot_bro/entity/partita/partitaCreateRequest.dart';
 
 import '../entity/campionato/campionatoResponse.dart';
 import '../entity/statistiche/classificaResponse.dart';
@@ -131,5 +132,53 @@ class CampionatoService {
     }
   }
 
+  Future<bool> addPartita(String token, int id, PartitaCreateRequest partitaCreateRequest) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/api/partite/campionato/$id"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(partitaCreateRequest.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Errore durante l\'aggiunta della partita');
+    }
+  }
+
+  Future<bool> unregisterFromMatch(String token, int idPartita, int idUtente) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/api/partite/$idPartita/disiscriviti/$idUtente"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Errore durante la disiscrizione dalla partita');
+    }
+  }
+
+  Future<bool> iscrivitiAllaPartita(String token, int idPartita, int idUtente) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/api/partite/$idPartita/iscriviti/$idUtente"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Errore durante la disiscrizione dalla partita');
+    }
+  }
 
 }
