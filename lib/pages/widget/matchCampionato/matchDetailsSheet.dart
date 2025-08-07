@@ -3,6 +3,7 @@ import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
 import 'package:foot_bro/service/campionatoService.dart';
 import '../../../entity/partita/partita.dart';
 import '../../../entity/user/user.dart';
+import 'formationFieldWidget.dart';
 
 class MatchDetailsSheet extends StatefulWidget {
   final Partita match;
@@ -149,7 +150,36 @@ class _MatchDetailsSheetState extends State<MatchDetailsSheet> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                        _buildDetailSection('Squadre', []),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: _buildDetailSection('Squadre', [])),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FormationFieldWidget(
+                                      teamA: teamA,
+                                      teamB: teamB,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.sports_football),
+                              label: const Text('Schiera Formazione'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(20),
