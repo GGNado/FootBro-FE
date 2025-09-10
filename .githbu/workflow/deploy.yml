@@ -1,0 +1,58 @@
+name: Deploy Frontend Only
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'  # cambia con la tua versione
+
+      - name: Build Flutter Web
+        run: |
+          flutter pub get
+          flutter build web --release
+
+      - name: Build Docker Image
+        run: docker build -t footbro-frontend:latest .
+
+      - name: Save Docker Image
+        run: docker save footbro-frontend:latest | gzip > frontend.tar.gz
+
+      - name: Copy Image to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "frontend.tar.gz"
+          target: "/tmp"
+
+      - name: Deploy Frontend Container
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            # Load new image
+            cd /tmp && docker load < frontend.tar.gz
+            
+            # Stop and remove old frontend container
+            docker stop footbro-frontend 2>/dev/null || true
+            docker rm footbro-frontend 2>/dev/null || true
+            
+            # Start only frontend service
+            cd /root/footbro
+            docker compose up -d --no-deps frontend
+            
+            # Cleanup
+            rm -f /tmp/frontend.tar.gz
