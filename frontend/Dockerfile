@@ -8,7 +8,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/
 
 # Copia i file build di Flutter nella directory di nginx
-COPY build/web/ /usr/share/nginx/html/
+COPY web/ /usr/share/nginx/html/
 
 # Esponi la porta 80
 EXPOSE 80
