@@ -1,3 +1,4 @@
+import 'package:foot_bro/entity/campionato/campionatoCreateRequest.dart';
 import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
 import 'package:foot_bro/entity/partita/partitaCreateRequest.dart';
 
@@ -179,6 +180,23 @@ class CampionatoService {
     } else {
       throw Exception('Errore durante la disiscrizione dalla partita');
     }
+  }
+
+  Future<bool> createCampionato(String token, int userId, CampionatoCreateRequest campionato) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/api/campionati"),
+      headers: {
+        'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(campionato.toJson())
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+
+    return false;
   }
 
 }

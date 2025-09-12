@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:foot_bro/entity/campionato/campionatoCreateRequest.dart';
 import 'package:foot_bro/entity/statistiche/quickStatsResponse.dart';
+import 'package:foot_bro/pages/widget/CreateChampionshipDialog.dart';
 import 'package:foot_bro/pages/widget/joinCampionatoWidget.dart';
 import 'package:foot_bro/service/campionatoService.dart';
 import 'package:foot_bro/service/userService.dart';
@@ -284,25 +286,111 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
 
       // Floating action button animato
-      floatingActionButton: AnimatedBuilder(
-        animation: _floatingAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: 0.9 + (0.1 * _floatingAnimation.value),
-            child: FloatingActionButton.extended(
-              onPressed: _showJoinChampionshipDialog, // Cambia questa riga
-              backgroundColor: Colors.green[600],
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'Entra nel Campionato', // Cambia il testo
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // FAB per creare campionato
+            AnimatedBuilder(
+              animation: _floatingAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: 0.9 + (0.1 * _floatingAnimation.value),
+                  child: FloatingActionButton(
+                    onPressed: _showCreateChampionshipDialog,
+                    backgroundColor: Colors.orange[600],
+                    heroTag: "create",
+                    child: const Icon(Icons.add_circle, color: Colors.white),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // FAB principale per entrare nel campionato
+            AnimatedBuilder(
+              animation: _floatingAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: 0.9 + (0.1 * _floatingAnimation.value),
+                  child: FloatingActionButton.extended(
+                    onPressed: _showJoinChampionshipDialog,
+                    backgroundColor: Colors.green[600],
+                    heroTag: "join",
+                    icon: const Icon(Icons.login, color: Colors.white),
+                    label: const Text(
+                      'Entra',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+    );
+        }
+
+  Future<void> _handleCreateChampionship(String nome, String descrizione, String tipologia) async {
+    try {
+      final service = CampionatoService();
+      CampionatoCreateRequest campionato = CampionatoCreateRequest(
+        nome: nome,
+        descrizione: descrizione,
+        idUtente: user!.id,
+        tipologiaCampionato: tipologia.toUpperCase().replaceAll(' ', '_'),
+
+      );
+      final success = await service.createCampionato(user!.token, user!.id, campionato);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Campionato creato con successo!'),
+            backgroundColor: Colors.green[600],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+
+        // Ricarica i campionati
+        await _fetchCampionati();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Impossibile creare il campionato con questo nome. Riprova.'),
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-          );
-        },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showCreateChampionshipDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CreateChampionshipDialog(
+        onCreateChampionship: _handleCreateChampionship,
       ),
     );
   }
