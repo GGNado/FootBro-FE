@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foot_bro/entity/partita/SalvaSquadraRequest.dart';
 import 'package:foot_bro/service/campionatoService.dart';
+import 'package:foot_bro/store/storage.dart';
 import '../../../entity/partita/partita.dart';
 import '../../../entity/user/user.dart';
 import 'formationFieldWidget.dart';
@@ -748,6 +749,27 @@ class _MatchDetailsSheetState extends State<MatchDetailsSheet> {
           ),
           const SizedBox(height: 12),
           _buildDragDropTeams(),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => _buildMatchStatsDialog(context, widget.match, widget.user.token),
+              );
+            },
+            label: const Text(
+              'Concludi Partita',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          )
         ],
       ),
     );
@@ -1022,5 +1044,300 @@ class _MatchDetailsSheetState extends State<MatchDetailsSheet> {
   void _autoAssignTeams() {
     // Implementa la logica per assegnare automaticamente le squadre
     print('Auto assigning teams');
+  }
+}
+
+Widget _buildMatchStatsDialog(BuildContext context, Partita match, String userToken) {
+  return StatefulBuilder(
+    builder: (context, setState) {
+      // Raggruppa le partecipazioni per squadra
+      final Map<String, List<PartecipazionePartita>> teamsBySquadra = {};
+
+      for (var partecipazione in match.partecipazioni) {
+        if (!teamsBySquadra.containsKey(partecipazione.squadra)) {
+          teamsBySquadra[partecipazione.squadra] = [];
+        }
+        teamsBySquadra[partecipazione.squadra]!.add(partecipazione);
+      }
+
+      return AlertDialog(
+        title: const Text('Statistiche Partita'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: teamsBySquadra.entries.map((teamEntry) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          teamEntry.key,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...teamEntry.value.map((partecipazione) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  partecipazione.utente.username ?? 'Nome non disponibile',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Column(
+                                  children: [
+                                    // Prima riga: Goal e Assist
+                                    Row(
+                                      children: [
+                                        // Goal
+                                        Expanded(
+                                          child: Column(
+                                            children: [
+                                              const Text('Goal', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      if (partecipazione.golSegnati > 0) {
+                                                        setState(() {
+                                                          _updatePartecipazione(match, partecipazione,
+                                                              golSegnati: partecipazione.golSegnati - 1);
+                                                        });
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red.shade100,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.remove, size: 14, color: Colors.red),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 30,
+                                                    alignment: Alignment.center,
+                                                    child: Text('${partecipazione.golSegnati}',
+                                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        _updatePartecipazione(match, partecipazione,
+                                                            golSegnati: partecipazione.golSegnati + 1);
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green.shade100,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.add, size: 14, color: Colors.green),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // Assist
+                                        Expanded(
+                                          child: Column(
+                                            children: [
+                                              const Text('Assist', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      if (partecipazione.assist > 0) {
+                                                        setState(() {
+                                                          _updatePartecipazione(match, partecipazione,
+                                                              assist: partecipazione.assist - 1);
+                                                        });
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red.shade100,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.remove, size: 14, color: Colors.red),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 30,
+                                                    alignment: Alignment.center,
+                                                    child: Text('${partecipazione.assist}',
+                                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        _updatePartecipazione(match, partecipazione,
+                                                            assist: partecipazione.assist + 1);
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green.shade100,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(Icons.add, size: 14, color: Colors.green),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // Seconda riga: Voto (centrato)
+                                    Column(
+                                      children: [
+                                        const Text('Voto', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (partecipazione.voto > 1.0) {
+                                                  setState(() {
+                                                    _updatePartecipazione(match, partecipazione,
+                                                        voto: (partecipazione.voto - 0.5).clamp(1.0, 10.0));
+                                                  });
+                                                }
+                                              },
+                                              child: Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.shade100,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.remove, size: 16, color: Colors.red),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 50,
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                '${partecipazione.voto.toStringAsFixed(1)}',
+                                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (partecipazione.voto < 10.0) {
+                                                  setState(() {
+                                                    _updatePartecipazione(match, partecipazione,
+                                                        voto: (partecipazione.voto + 0.5).clamp(1.0, 10.0));
+                                                  });
+                                                }
+                                              },
+                                              child: Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade100,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.add, size: 16, color: Colors.green),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annulla'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Qui puoi salvare le statistiche aggiornate
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Partita conclusa con statistiche salvate!')),
+              );
+              CampionatoService campionatoService = CampionatoService();
+              campionatoService.concludiPartita(userToken, match);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Salva e Concludi'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// Funzione helper per aggiornare una partecipazione
+void _updatePartecipazione(Partita match, PartecipazionePartita partecipazione, {
+  int? golSegnati,
+  int? assist,
+  double? voto,
+}) {
+  final index = match.partecipazioni.indexOf(partecipazione);
+  if (index != -1) {
+    match.partecipazioni[index] = PartecipazionePartita(
+      utente: partecipazione.utente,
+      golSegnati: golSegnati ?? partecipazione.golSegnati,
+      assist: assist ?? partecipazione.assist,
+      voto: voto ?? partecipazione.voto,
+      squadra: partecipazione.squadra,
+    );
   }
 }

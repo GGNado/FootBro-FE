@@ -22,4 +22,13 @@ class UserCampionatoResponse{
       lastName: json['lastName'],
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+    };
+  }
 }

@@ -199,4 +199,15 @@ class CampionatoService {
     return false;
   }
 
+  void concludiPartita(String token, Partita match) async{
+    final response = await http.put(
+        Uri.parse("$_baseUrl/api/partite/termina"),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(match.toJson())
+    );
+  }
+
 }

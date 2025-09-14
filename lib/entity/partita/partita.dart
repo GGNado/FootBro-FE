@@ -17,6 +17,17 @@ class Partita {
     required this.partecipazioni,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'luogo': luogo,
+      'dataOra': dataOra.toIso8601String(),
+      'golSquadraB': golSquadraB,
+      'golSquadraA': golSquadraA,
+      'partecipazioni': partecipazioni.map((p) => p.toJson()).toList(),
+    };
+  }
+
   factory Partita.fromJson(Map<String, dynamic> json) {
     return Partita(
       id: json['id'],
@@ -54,5 +65,15 @@ class PartecipazionePartita {
       voto: json['voto'] ?? 0,
       squadra: json['squadra'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'utente': utente.toJson(),
+      'golSegnati': golSegnati,
+      'assist': assist,
+      'voto': voto,
+      'squadra': squadra,
+    };
   }
 }
